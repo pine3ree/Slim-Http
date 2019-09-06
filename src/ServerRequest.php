@@ -422,13 +422,7 @@ class ServerRequest implements ServerRequestInterface
      */
     public function getContentCharset(): ?string
     {
-        $mediaTypeParams = $this->getMediaTypeParams();
-
-        if (isset($mediaTypeParams['charset'])) {
-            return $mediaTypeParams['charset'];
-        }
-
-        return null;
+        return $this->getMediaTypeParams()['charset'] ?? null;
     }
 
     /**
@@ -469,14 +463,7 @@ class ServerRequest implements ServerRequestInterface
      */
     public function getCookieParam(string $key, $default = null)
     {
-        $cookies = $this->serverRequest->getCookieParams();
-        $result = $default;
-
-        if (isset($cookies[$key])) {
-            $result = $cookies[$key];
-        }
-
-        return $result;
+        return $this->serverRequest->getCookieParams()[$key] ?? $default;
     }
 
     /**
@@ -539,19 +526,16 @@ class ServerRequest implements ServerRequestInterface
      */
     public function getParam(string $key, $default = null)
     {
-        $postParams = $this->getParsedBody();
-        $getParams = $this->getQueryParams();
-        $result = $default;
+        $bodyParams = $this->getParsedBody();
 
-        if (is_array($postParams) && isset($postParams[$key])) {
-            $result = $postParams[$key];
-        } elseif (is_object($postParams) && property_exists($postParams, $key)) {
-            $result = $postParams->$key;
-        } elseif (isset($getParams[$key])) {
-            $result = $getParams[$key];
+        if (is_array($bodyParams) && isset($bodyParams[$key])) {
+            return $bodyParams[$key];
+        }
+        if (is_object($bodyParams) && property_exists($bodyParams, $key)) {
+            return $bodyParams->{$key};
         }
 
-        return $result;
+        return $this->getQueryParams()[$key] ?? $default;
     }
 
     /**
@@ -563,14 +547,12 @@ class ServerRequest implements ServerRequestInterface
      */
     public function getParams(): array
     {
-        $params = $this->getQueryParams();
-        $postParams = $this->getParsedBody();
-
-        if ($postParams) {
-            $params = array_merge($params, (array)$postParams);
+        $bodyParams = $this->getParsedBody();
+        if ($bodyParams) {
+            return (array)$bodyParams + $this->getQueryParams();
         }
 
-        return $params;
+        return $this->getQueryParams();
     }
 
     /**
@@ -585,16 +567,16 @@ class ServerRequest implements ServerRequestInterface
      */
     public function getParsedBodyParam(string $key, $default = null)
     {
-        $postParams = $this->getParsedBody();
-        $result = $default;
+        $bodyParams = $this->getParsedBody();
 
-        if (is_array($postParams) && isset($postParams[$key])) {
-            $result = $postParams[$key];
-        } elseif (is_object($postParams) && property_exists($postParams, $key)) {
-            $result = $postParams->$key;
+        if (is_array($bodyParams) && isset($bodyParams[$key])) {
+            return $postParams[$key];
+        }
+        if (is_object($bodyParams) && property_exists($bodyParams, $key)) {
+            return $bodyParams->{$key};
         }
 
-        return $result;
+        return $default;
     }
 
     /**
@@ -609,14 +591,7 @@ class ServerRequest implements ServerRequestInterface
      */
     public function getQueryParam(string $key, $default = null)
     {
-        $getParams = $this->getQueryParams();
-        $result = $default;
-
-        if (isset($getParams[$key])) {
-            $result = $getParams[$key];
-        }
-
-        return $result;
+        return $this->getQueryParams()[$key] ?? $default;
     }
 
     /**
@@ -630,8 +605,7 @@ class ServerRequest implements ServerRequestInterface
      */
     public function getServerParam(string $key, $default = null)
     {
-        $serverParams = $this->serverRequest->getServerParams();
-        return isset($serverParams[$key]) ? $serverParams[$key] : $default;
+        return $this->serverRequest->getServerParams()[$key] ?? $default;
     }
 
     /**
